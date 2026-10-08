@@ -1,0 +1,1 @@
+"""Mock fleet page renderer."""

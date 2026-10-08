@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Office delivery demo</title>
+  <style>
+    :root {
+      --ink: #1c1915;
+      --muted: #5c564c;
+      --paper: #f3efe6;
+      --card: #fffdf8;
+      --line: #e3d9c8;
+      --navy: #16324f;
+      --ok: #1f7a4d;
+      --block: #9a3412;
+      --focus: #1d4e89;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font: 16px/1.45 "Segoe UI", system-ui, sans-serif;
+    }
+    header, main, footer { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    header { padding: 28px 0 8px; }
+    .eyebrow { margin: 0; letter-spacing: 0.08em; text-transform: uppercase; font-size: 12px; color: var(--muted); }
+    h1 { margin: 6px 0 8px; font-size: 34px; line-height: 1.15; }
+    .lede { margin: 0; max-width: 680px; color: var(--muted); }
+    .status {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid var(--line);
+      font-weight: 650;
+    }
+    .status.blocked { color: var(--block); }
+    .status.ready { color: var(--ok); }
+    .roles, .rail { display: grid; gap: 10px; }
+    .roles { grid-template-columns: repeat(4, 1fr); margin: 18px 0; }
+    .role, .step, section, .plane {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    .role, .step { padding: 12px 14px; }
+    .role strong, .step strong { display: block; }
+    .role span, .step span, .hint { color: var(--muted); font-size: 14px; }
+    .rail { grid-template-columns: repeat(6, 1fr); margin-bottom: 16px; }
+    .step.current { border-color: var(--navy); box-shadow: inset 0 0 0 1px var(--navy); }
+    main { display: grid; gap: 14px; padding-bottom: 28px; }
+    section { padding: 18px; }
+    h2 { margin: 0 0 8px; font-size: 20px; }
+    .quote {
+      margin: 0;
+      padding: 14px 16px;
+      background: #f7f1e6;
+      border-radius: 10px;
+      font-size: 20px;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    button, input {
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid var(--navy);
+    }
+    button {
+      background: var(--navy);
+      color: white;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+    button.secondary { background: white; color: var(--navy); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    input { padding: 10px 12px; min-width: 220px; }
+    ul { margin: 8px 0 0; padding-left: 18px; }
+    .split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 14px; }
+    .fleet { list-style: none; margin: 0; padding: 0; }
+    .fleet li, .draft {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .banner { margin-top: 8px; font-size: 28px; font-weight: 700; }
+    .banner.warn { color: var(--block); }
+    .counts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .counts div { padding: 12px; background: #f7f1e6; border-radius: 10px; }
+    .counts strong { font-size: 28px; display: block; }
+    footer { color: var(--muted); font-size: 14px; padding-bottom: 32px; }
+    .error { color: var(--block); min-height: 1.2em; }
+    @media (max-width: 800px) {
+      h1 { font-size: 28px; }
+      .roles, .rail, .split, .counts { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="eyebrow">Manager walkthrough</p>
+    <h1>Four agents. One approved story.</h1>
+    <p class="lede">Requirements asks when the note is vague. Frontend and backend wait for a person. Test writes the report. Nobody closes the ticket.</p>
+    <div id="status" class="status blocked">Blocked</div>
+  </header>
+  <main>
+    <div class="roles" aria-label="Agents">
+      <div class="role"><strong>Requirements</strong><span>Owns the client note</span></div>
+      <div class="role"><strong>Frontend</strong><span>Builds the approved screen</span></div>
+      <div class="role"><strong>Backend</strong><span>Builds the approved API</span></div>
+      <div class="role"><strong>Automation</strong><span>Runs the test pyramid</span></div>
+    </div>
+    <ol class="rail" id="rail"></ol>
+
+    <section>
+      <h2>1. Client note</h2>
+      <p class="quote" id="brief"></p>
+      <div class="row">
+        <button id="ask" type="button">Ask the requirements agent</button>
+        <button id="answer" class="secondary" type="button" disabled>Record the client answer</button>
+      </div>
+      <p id="ask-result" class="hint"></p>
+    </section>
+
+    <section>
+      <h2>2. Approval</h2>
+      <p class="hint">The story can be complete and still stay blocked until a person approves it.</p>
+      <div id="story"></div>
+      <div class="row">
+        <input id="name" aria-label="Approver name" placeholder="Stakeholder name" value="Alex Morgan">
+        <button id="approve" type="button" disabled>Approve the story</button>
+      </div>
+    </section>
+
+    <div class="split">
+      <section>
+        <h2>3. Contract and draft tickets</h2>
+        <p id="contract" class="hint">Waiting for approval.</p>
+        <div id="drafts"></div>
+      </section>
+      <section>
+        <h2>4. Working fleet board</h2>
+        <div class="row">
+          <button id="as-tech" class="secondary" type="button" disabled>Technician</button>
+          <button id="as-empty" class="secondary" type="button" disabled>Empty fleet</button>
+          <button id="as-stranger" class="secondary" type="button" disabled>Unknown person</button>
+        </div>
+        <div id="plane" class="banner">Locked until approval</div>
+        <ul id="fleet" class="fleet"></ul>
+      </section>
+    </div>
+
+    <section>
+      <h2>5. Tests and sign-off</h2>
+      <div class="row">
+        <button id="test" type="button" disabled>Run the test pyramid</button>
+        <button id="accept" class="secondary" type="button" disabled>Accept the story</button>
+        <button id="reset" class="secondary" type="button">Start over</button>
+      </div>
+      <div id="counts" class="counts" hidden></div>
+      <p id="signoff" class="hint"></p>
+      <p id="error" class="error" role="alert"></p>
+    </section>
+  </main>
+  <footer>
+    <p>Say this while you click: the note is too thin to build; the agent asks; you answer; you approve; the board matches the contract; tests pass; you accept. JIRA drafts stay local.</p>
+  </footer>
+  <script>
+    const phases = ["Clarify", "Approve", "Contract", "Build", "Test", "Sign-off"];
+    const rail = document.getElementById("rail");
+    phases.forEach((name) => {
+      const item = document.createElement("li");
+      item.className = "step";
+      item.innerHTML = `<strong>${name}</strong>`;
+      rail.appendChild(item);
+    });
+
+    const el = (id) => document.getElementById(id);
+    const labels = {
+      actor: "Who uses it",
+      outcome: "What they get",
+      in_scope: "In scope",
+      out_of_scope: "Out of scope",
+      acceptance_criteria: "Acceptance",
+      error_and_permission_rules: "Errors and access",
+      data_rules: "Data",
+      client_source: "Source",
+      dependencies: "Dependencies"
+    };
+
+    function currentIndex(phase) {
+      return { clarify: 0, approve: 1, build: 3, test: 4, "sign-off": 5 }[phase] ?? 0;
+    }
+
+    function paint(state) {
+      el("brief").textContent = state.brief;
+      el("status").textContent = state.allowed
+        ? (state.accepted_by ? `Accepted by ${state.accepted_by}` : `Approved by ${state.approver}`)
+        : "Blocked";
+      el("status").className = "status " + (state.allowed ? "ready" : "blocked");
+      const index = state.contract ? Math.max(currentIndex(state.phase), 2) : currentIndex(state.phase);
+      [...rail.children].forEach((item, i) => item.classList.toggle("current", i === index));
+
+      if (!state.asked) {
+        el("ask-result").textContent = "The note does not say who it is for or what done looks like.";
+      } else if (state.missing_fields.length) {
+        const plain = state.missing_fields.map((field) => labels[field] || field);
+        el("ask-result").textContent = "Still blocked. The agent asked instead of guessing. Missing: " + plain.join(", ") + ".";
+      } else if (state.open_questions.length) {
+        el("ask-result").textContent = "Question still open: " + state.open_questions[0];
+      } else {
+        el("ask-result").textContent = "The client answer is recorded. " + (state.allowed ? state.reason : "Approval is still required.");
+      }
+
+      el("answer").disabled = !state.asked || state.answered;
+      el("ask").disabled = state.asked;
+      el("approve").disabled = !state.answered || state.allowed;
+
+      const story = el("story");
+      story.innerHTML = "";
+      if (state.story) {
+        const list = document.createElement("ul");
+        ["actor", "outcome", "in_scope", "out_of_scope"].forEach((key) => {
+          const item = document.createElement("li");
+          item.textContent = `${labels[key]}: ${state.story[key]}`;
+          list.appendChild(item);
+        });
+        story.appendChild(list);
+      }
+
+      el("contract").textContent = state.contract
+        ? `${state.contract.paths[0]} · token tech-1 · states: ${state.contract.ui_states.join(", ")}`
+        : "Waiting for approval.";
+      const drafts = el("drafts");
+      drafts.innerHTML = "";
+      state.drafts.forEach((draft) => {
+        const row = document.createElement("div");
+        row.className = "draft";
+        row.innerHTML = `<span>${draft.type}</span><span>${draft.summary}</span>`;
+        drafts.appendChild(row);
+      });
+
+      ["as-tech", "as-empty", "as-stranger", "test"].forEach((id) => {
+        el(id).disabled = !state.allowed;
+      });
+      const failed = state.tests ? state.tests.unit_failed + state.tests.api_failed + state.tests.e2e_failed : 1;
+      el("accept").disabled = !state.tests || failed > 0 || !state.allowed || Boolean(state.accepted_by);
+      const counts = el("counts");
+      if (state.tests) {
+        counts.hidden = false;
+        counts.innerHTML = [
+          ["Unit", state.tests.unit_passed, state.tests.unit_failed],
+          ["API", state.tests.api_passed, state.tests.api_failed],
+          ["End-to-end", state.tests.e2e_passed, state.tests.e2e_failed]
+        ].map(([name, passed, fail]) => `<div><span>${name}</span><strong>${passed}</strong><span>${fail} failed</span></div>`).join("");
+      } else {
+        counts.hidden = true;
+      }
+      el("signoff").textContent = state.accepted_by
+        ? `${state.accepted_by} accepted MOCK-2 for this demo. JIRA was not closed.`
+        : "Accept stays off until the pyramid has been run.";
+      if (!state.allowed) {
+        el("plane").textContent = "Locked until approval";
+        el("plane").className = "banner";
+        el("fleet").innerHTML = "";
+      }
+    }
+
+    async function post(url, payload) {
+      el("error").textContent = "";
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload || {})
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Request failed");
+      return data;
+    }
+
+    async function refresh() {
+      const response = await fetch("/api/state");
+      paint(await response.json());
+    }
+
+    async function showFleet(params) {
+      el("error").textContent = "";
+      const response = await fetch("/api/fleet?" + params);
+      const data = await response.json();
+      if (!response.ok) {
+        el("error").textContent = data.error || "Fleet request failed";
+        return;
+      }
+      el("plane").textContent = data.page.split("\n")[0] === "Forbidden" || data.page === "No aircraft"
+        ? data.page
+        : "Fleet status";
+      el("plane").className = "banner" + (data.status === 403 ? " warn" : "");
+      const list = el("fleet");
+      list.innerHTML = "";
+      if (data.page === "Forbidden" || data.page === "No aircraft") {
+        el("plane").textContent = data.page;
+        return;
+      }
+      data.aircraft.forEach((item) => {
+        const row = document.createElement("li");
+        row.innerHTML = `<span>${item.tail}</span><span>${item.status.replaceAll("_", " ")}</span>`;
+        list.appendChild(row);
+      });
+    }
+
+    el("ask").onclick = async () => paint(await post("/api/ask"));
+    el("answer").onclick = async () => paint(await post("/api/answer"));
+    el("approve").onclick = async () => paint(await post("/api/approve", { name: el("name").value }));
+    el("test").onclick = async () => {
+      el("test").textContent = "Running tests…";
+      try { paint(await post("/api/test")); }
+      finally { el("test").textContent = "Run the test pyramid"; }
+    };
+    el("accept").onclick = async () => paint(await post("/api/accept"));
+    el("reset").onclick = async () => {
+      paint(await post("/api/reset"));
+      el("plane").textContent = "Locked until approval";
+      el("fleet").innerHTML = "";
+    };
+    el("as-tech").onclick = () => showFleet("token=tech-1");
+    el("as-empty").onclick = () => showFleet("token=tech-1&empty=1");
+    el("as-stranger").onclick = () => showFleet("token=visitor");
+    refresh();
+  </script>
+</body>
+</html>

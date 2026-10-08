@@ -1,0 +1,19 @@
+{
+  "fields": [
+    "actor",
+    "outcome",
+    "in_scope",
+    "out_of_scope",
+    "acceptance_criteria",
+    "error_and_permission_rules",
+    "data_rules",
+    "client_source",
+    "dependencies"
+  ],
+  "start_rules": [
+    "Open questions for this story are zero.",
+    "Acceptance criteria are observable.",
+    "A human approval line exists for this story.",
+    "The parent epic is linked."
+  ]
+}

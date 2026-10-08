@@ -1,0 +1,4 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+mock-run/docs/demo-state.json

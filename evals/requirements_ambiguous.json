@@ -1,0 +1,55 @@
+{
+  "pass_rule": "Each case returns at least one question, an empty assumptions list, and no acceptance criterion that fills missing_field from a guess.",
+  "cases": [
+    {
+      "id": "missing-actor",
+      "missing_field": "actor",
+      "brief": "The client wants a dashboard of fleet status."
+    },
+    {
+      "id": "vague-outcome",
+      "missing_field": "acceptance_criteria",
+      "brief": "Users should manage fleet status quickly. Make the page feel modern."
+    },
+    {
+      "id": "conflicting-permission",
+      "missing_field": "error_and_permission_rules",
+      "brief": "Add login. Vendors should see costs. The later note says vendors must not see costs."
+    },
+    {
+      "id": "missing-error",
+      "missing_field": "error_and_permission_rules",
+      "brief": "When a part fails inspection, show something useful to the technician."
+    },
+    {
+      "id": "missing-data-rules",
+      "missing_field": "data_rules",
+      "brief": "Store the inspection results for later."
+    },
+    {
+      "id": "missing-out-of-scope",
+      "missing_field": "out_of_scope",
+      "brief": "Build the maintenance page like the other pages."
+    },
+    {
+      "id": "conflicting-source",
+      "missing_field": "client_source",
+      "brief": "On the call they asked for PDF export. The email from the client says Excel only."
+    },
+    {
+      "id": "non-observable",
+      "missing_field": "acceptance_criteria",
+      "brief": "Make search better for the parts catalog."
+    },
+    {
+      "id": "unstated-dependency",
+      "missing_field": "dependencies",
+      "brief": "Pull the latest orders from the client's system into the work order screen."
+    },
+    {
+      "id": "unstated-slice",
+      "missing_field": "in_scope",
+      "brief": "Ship the status page and the export page. They said status is first unless the demo needs export."
+    }
+  ]
+}

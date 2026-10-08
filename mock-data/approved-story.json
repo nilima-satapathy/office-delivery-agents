@@ -1,0 +1,18 @@
+{
+  "epic_key": "MOCK-1",
+  "story_key": "MOCK-2",
+  "actor": "signed-in technician",
+  "outcome": "The technician sees each aircraft tail and status.",
+  "in_scope": "List aircraft for one signed-in technician. Status values are serviceable, in_maintenance, and grounded.",
+  "out_of_scope": "Editing status, export, and login screens.",
+  "acceptance_criteria": [
+    "GET /api/aircraft with token tech-1 returns 200 and each aircraft tail and status.",
+    "A signed-in technician with an empty fleet sees the text No aircraft.",
+    "A request without a known token returns 403 and the text Forbidden."
+  ],
+  "error_and_permission_rules": "A missing or unknown token returns 403. No other role can list aircraft.",
+  "data_rules": "In-memory records only. Each aircraft has tail and status. Status is serviceable, in_maintenance, or grounded.",
+  "client_source": "Mock client note, 2026-10-08.",
+  "dependencies": "None.",
+  "parent_summary": "Fleet status board"
+}
